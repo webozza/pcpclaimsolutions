@@ -21,7 +21,7 @@
                     <p>Not sure what your reg is or did you have a private number plate? <a href="#" id="manual-entry-trigger">Click here <span>>></span></a></p>
                 </div>
                 <div>
-                    <button class="next-btn">Start Check</button>
+                    <button class="next-btn">Check my Vehicle</button>
                 </div>
             </div>
 
