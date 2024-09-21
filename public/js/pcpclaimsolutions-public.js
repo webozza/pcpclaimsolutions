@@ -80,50 +80,171 @@ jQuery(document).ready(function ($) {
     allowSlidePrev: false,
   });
 
-  // Handle "Click here" to manually enter car details
-  $("#manual-entry-trigger").on("click", function (e) {
-    e.preventDefault(); // Prevent the default action of the link
-    showFallbackForm(); // Show the fallback form
+  // Store the original content of the entire form
+  const originalFormContent = $(".form-container").html(); // Store the form content including all elements
 
-    // Move to the next slide where the fallback form will appear
-    swiper.allowSlideNext = true;
-    swiper.slideNext();
-    swiper.allowSlideNext = false;
+  // Function to reset the entire form and reinitialize everything
+  function resetForm() {
+    // Reset the form content by injecting the original HTML
+    $(".form-container").html(originalFormContent);
+    submitForm();
+
+    // Reinitialize the swiper instance after resetting the form
+    swiper = new Swiper(".swiper-container", {
+      autoHeight: true,
+      allowSlideNext: false,
+      allowSlidePrev: false,
+    });
+
+    // Reinitialize listeners for all form elements and swiper navigation
+    reinitializeListeners();
+
+    // Reset swiper navigation to the first slide
+    swiper.allowSlidePrev = true;
+    swiper.slideTo(0); // Slide back to the first step
+    swiper.allowSlidePrev = false;
+
+    // Update the progress bar
     updateProgressBar();
-  });
+  }
+
+  // Handle "Click here" to manually enter car details
+  function initializeManualEntryTrigger() {
+    $("#manual-entry-trigger")
+      .off("click")
+      .on("click", function (e) {
+        e.preventDefault();
+        showFallbackForm();
+        swiper.allowSlideNext = true;
+        swiper.slideNext();
+        swiper.allowSlideNext = false;
+        updateProgressBar();
+      });
+  }
+
+  initializeManualEntryTrigger();
 
   // Function to create the additional input field for "Other"
   function handleOtherSelection(inputSelector, otherFieldSelector) {
     $(inputSelector).on("change", function () {
       if ($(this).val() === "Other" || $(this).val() === "0") {
         $(otherFieldSelector).slideDown(function () {
-          swiper.updateAutoHeight(300); // Update Swiper height with animation
-        }); // Show the additional field if "Other" is selected
+          swiper.updateAutoHeight(300);
+        });
       } else {
         $(otherFieldSelector).slideUp(function () {
-          swiper.updateAutoHeight(300); // Update Swiper height with animation
-        }); // Hide it if another option is selected
+          swiper.updateAutoHeight(300);
+        });
       }
     });
   }
 
-  let handleFinanceProviderSelection = () => {
-    $('[name="finance-provider-name"]').change(function () {
-      let isChecked = $(this).is(":checked");
-      if (isChecked) {
+  // Function to handle the finance provider and ownership year
+  function handleOwnershipSelection() {
+    $('input[name="car-ownership"]')
+      .off("change")
+      .on("change", function () {
+        var selectedOwnership = $(this).val();
+        if (selectedOwnership === "Other") {
+          $("#other-ownership-field").slideDown(function () {
+            swiper.updateAutoHeight(300);
+          });
+          $("#other-ownership")
+            .off("input")
+            .on("input", function () {
+              var customYear = parseInt($(this).val(), 10);
+              if (customYear > 2021) {
+                showIneligibilityMessage();
+              }
+            });
+        } else {
+          $("#other-ownership-field").slideUp(function () {
+            swiper.updateAutoHeight(300);
+          });
+        }
+      });
+  }
+
+  function handleFinanceProviderSelection() {
+    $('[name="finance-provider-name"]')
+      .off("change")
+      .on("change", function () {
         let yesNo = $(this).val();
-        if (yesNo == "Yes") {
+        if (yesNo === "Yes") {
           $("#fp__selector").fadeIn();
           swiper.updateAutoHeight(300);
         } else {
           $("#fp__selector").hide();
           swiper.updateAutoHeight(300);
         }
+      });
+
+    $(".finance-provider-selector")
+      .off("change")
+      .on("change", function () {
+        var selectedOption = $(this).find(":selected");
+        var isClaimable = selectedOption.attr("data-claimable") === "true";
+        if (!isClaimable) {
+          showIneligibilityMessage();
+        }
+      });
+  }
+
+  // Initialize ownership and finance provider handlers
+  handleOwnershipSelection();
+  handleFinanceProviderSelection();
+
+  // Function to show the "not eligible" message on the last slide
+  function showIneligibilityMessage() {
+    swiper.allowSlideNext = true;
+    swiper.slideTo(swiper.slides.length - 1);
+    swiper.allowSlideNext = false;
+
+    $(".swiper-slide").last().html(`
+      <div class="ineligibility-message" style="text-align: center;">
+        <img src="/wp-content/plugins/pcpclaimsolutions/public/assets/not-eligible.png" alt="Not Eligible" style="width: 50px; margin-bottom: 20px;">
+        <h3>We're sorry but you're not eligible for a claim.</h3>
+        <button class="restart-btn">Check another vehicle</button>
+      </div>
+    `);
+
+    $(".restart-btn").on("click", function () {
+      restartForm();
+    });
+  }
+
+  // Function to handle finance provider and ownership selection
+  function reinitializeListeners() {
+    handleFinanceProviderSelection();
+    handleOwnershipSelection();
+    handleOtherSelection(
+      'input[name="car-ownership"]',
+      "#other-ownership-field"
+    );
+    handleOtherSelection("#car-fuel", "#other-fuel-field");
+    handleOtherSelection("#car-make", "#other-car-make-field");
+
+    $('input[name="car-details-correct"]').on("change", function () {
+      var isConfirmed = $(this).val();
+      if (isConfirmed === "no") {
+        // Show the fallback form
+        showFallbackForm();
+        // Prevent swiper from moving forward
+        swiper.allowSlideNext = false;
+      } else {
+        // Allow moving forward if "yes" is selected
+        swiper.allowSlideNext = true;
       }
     });
-  };
 
-  handleFinanceProviderSelection();
+    // Attach the next button listener
+    $(".next-btn").off("click").on("click", handleNextButtonClick);
+  }
+
+  // Function to restart the form and take the user back to the first slide
+  function restartForm() {
+    resetForm(); // Reset the entire form using the resetForm function
+  }
 
   // Call the function for radio buttons
   handleOtherSelection('input[name="car-ownership"]', "#other-ownership-field");
@@ -231,7 +352,7 @@ jQuery(document).ready(function ($) {
                 </select>
             </div>
             <div id="other-car-make-field" class="form-group" style="display:none;">
-                <input type="text" id="other-fuel" placeholder="Specify Other Make">
+                <input type="text" id="other-car-make" placeholder="Specify Other Make">
             </div>
 
             <div class="form-group">
@@ -251,8 +372,7 @@ jQuery(document).ready(function ($) {
                     <option>Biofuels</option>
                     <option value="CNG">Compressed Natural Gas (CNG)</option>
                     <option value="LPG">Liquefied Petroleum Gas (LPG)</option>
-                    <option value="0">Other</option>
-                <!-- Add other fuel types -->
+                    <option value="0">Other (please specify)</option>
                 </select>
             </div>
             <div id="other-fuel-field" class="form-group" style="display:none;">
@@ -264,13 +384,11 @@ jQuery(document).ready(function ($) {
         </div>
     `);
 
+    // Reinitialize the event listeners after rendering the fallback form
+    reinitializeListeners();
+
+    // Update the Swiper height after inserting new content
     swiper.update();
-    handleOtherSelection(
-      'input[name="car-ownership"]',
-      "#other-ownership-field"
-    );
-    handleOtherSelection("#car-fuel", "#other-fuel-field");
-    handleOtherSelection("#car-make", "#other-car-make-field");
   }
 
   // Function to populate the car details in the next slide if data is found
@@ -289,54 +407,42 @@ jQuery(document).ready(function ($) {
     $(".next-btn").prop("disabled", true); // Disable the button to prevent multiple clicks
   }
 
-  // Validate registration number and make API request
+  // Function to handle the next button click
   function handleNextButtonClick() {
     var currentSlide = swiper.activeIndex;
 
     if (currentSlide === 0) {
-      // Slide 1: Car Registration Input validation
+      // Handle car registration entry and API call
       var carReg = $("#car-reg").val();
       if (carReg === "") {
         alert("Please enter your car registration number.");
         return;
       }
-
-      // Show the loading effect
       showLoadingEffect();
-
-      // Perform AJAX call to the PHP file
       $.ajax({
         url: pcpclaims_plugin.api_handler,
         type: "POST",
         data: { registrationNumber: carReg },
         success: function (response) {
-          // Handle the response from the API
           var data = JSON.parse(response);
-
           if (data.error || !data.make) {
-            // If no data is found or an error is returned, show the fallback form
             showFallbackForm();
           } else {
-            // If car data is found, populate the car details in the next slide
             populateCarDetails(data);
           }
-
           proceedToNextSlide();
         },
-        error: function (xhr, status, error) {
-          alert("API request failed: " + error);
-          // In case of any error, show the fallback form
+        error: function () {
           showFallbackForm();
           proceedToNextSlide();
         },
         complete: function () {
-          // Reset the button text back to 'Next'
-          $(".next-btn").html("Next");
-          $(".next-btn").prop("disabled", false); // Re-enable the button
+          $(".next-btn").html("Next").prop("disabled", false);
         },
       });
     } else if (currentSlide === 1 && $(".fallback-form").length === 0) {
-      // Slide 2: Car Details Confirmation validation (only if no fallback form)
+      // Second Slide: Car Details Confirmation
+
       if (!validateRadioGroup('input[name="car-details-correct"]')) {
         alert("Please confirm whether the car details are correct.");
         return;
@@ -344,82 +450,21 @@ jQuery(document).ready(function ($) {
 
       var isConfirmed = $('input[name="car-details-correct"]:checked').val();
       if (isConfirmed === "no") {
+        // Show fallback form if "No" is selected for car details
         showFallbackForm();
-        return; // Don't proceed to the next slide
+        swiper.allowSlideNext = false; // Prevent moving to the next slide
+        swiper.slideTo(currentSlide); // Force swiper to stay on the current slide
+        return; // Stop the execution here to prevent advancing to the next slide
       } else {
         proceedToNextSlide();
       }
     } else if (currentSlide === 1 && $(".fallback-form").length > 0) {
-      // Slide 2: Fallback Form Validation
+      // If fallback form is already visible, validate and proceed
       if (!validateFallbackForm()) {
-        return; // If the fallback form has invalid fields, do not proceed
+        return; // Prevent swiper from moving to the next slide if validation fails
       }
-
       proceedToNextSlide();
-    } else if (currentSlide === 2) {
-      // Slide 3: Ownership Details validation
-      if (!validateRadioGroup('input[name="car-ownership"]')) {
-        alert("Please select the year you got the car.");
-        return;
-      }
-
-      var ownershipValue = $('input[name="car-ownership"]:checked').val();
-      if (ownershipValue === "Other" && $("#other-ownership").val() === "") {
-        alert("Please specify the year you got the car.");
-        return;
-      }
-
-      proceedToNextSlide();
-    } else if (currentSlide === 3) {
-      // Slide 4: Finance Details validation
-      if (!validateRadioGroup('input[name="loan-type"]')) {
-        alert("Please select your car loan type.");
-        return;
-      }
-
-      proceedToNextSlide();
-    } else if (currentSlide === 4) {
-      // Slide 5: Qualification Questions validation
-      if (!validateRadioGroup('input[name="commission-aware"]')) {
-        alert("Please select whether you were aware of any commission.");
-        return;
-      }
-
-      if (!validateRadioGroup('input[name="finance-provider-name"]')) {
-        alert(
-          "Please select whether you know the name of the finance provider."
-        );
-        return;
-      }
-
-      if (
-        $('input[name="finance-provider-name"]:checked').val() === "Yes" &&
-        $("#select-finance-provider select").val() === null
-      ) {
-        alert("Please select a finance provider.");
-        return;
-      }
-
-      proceedToNextSlide();
-    } else if (currentSlide === 5) {
-      // Slide 6: Price validation
-      if (!validateRadioGroup('input[name="car-cost"]')) {
-        alert("Please select how much the car cost.");
-        return;
-      }
-
-      proceedToNextSlide();
-    } else if (currentSlide === 6) {
-      // Slide 7: Final Details validation
-      if (
-        $("#first-name").val() === "" ||
-        $("#last-name").val() === "" ||
-        $("#email-address").val() === ""
-      ) {
-        alert("Please fill in all the required fields.");
-        return;
-      }
-
+    } else {
       proceedToNextSlide();
     }
   }
@@ -441,38 +486,59 @@ jQuery(document).ready(function ($) {
       alert("Please select the car make.");
       return false;
     }
-
     if (carMake === "0" && $("#other-car-make-field input").val() === "") {
       alert("Please specify the car make.");
       return false;
     }
-
-    if (carModel === "") {
-      alert("Please enter the car model.");
+    if (!carModel || !carYear || !carFuel || !carColour) {
+      alert("Please fill in all the fields.");
       return false;
     }
-
-    if (carColour === "") {
-      alert("Please enter the car colour.");
-      return false;
-    }
-
-    if (carYear === "") {
-      alert("Please enter the car year.");
-      return false;
-    }
-
-    if (!carFuel) {
-      alert("Please select the fuel type.");
-      return false;
-    }
-
-    if (carFuel === "0" && $("#other-fuel-field input").val() === "") {
-      alert("Please specify the fuel type.");
-      return false;
-    }
-
     return true;
+  }
+
+  function submitForm() {
+    $(".submit-pcp-request").on("click", function (e) {
+      e.preventDefault(); // Prevent the default form submission behavior
+
+      // Check if the privacy policy checkbox is checked
+      if (!$("#privacy-policy").is(":checked")) {
+        alert("You must agree to the privacy policy before submitting.");
+        return; // Exit the function, preventing the form from submitting
+      }
+
+      // Perform further validation or AJAX submission if required
+      var firstName = $("#first-name").val();
+      var lastName = $("#last-name").val();
+      var phoneNumber = $("#phone-number").val();
+      var emailAddress = $("#email-address").val();
+
+      if (!firstName || !lastName) {
+        alert("Please fill in the required fields.");
+        return;
+      }
+
+      // Proceed with form submission or AJAX call
+      // Example:
+      $.ajax({
+        url: "/path-to-your-api",
+        type: "POST",
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phoneNumber,
+          email_address: emailAddress,
+        },
+        success: function (response) {
+          // Handle success response
+          alert("Your request has been submitted!");
+        },
+        error: function () {
+          // Handle error response
+          alert("There was an error submitting your request.");
+        },
+      });
+    });
   }
 
   // Function to proceed to the next slide
@@ -489,6 +555,7 @@ jQuery(document).ready(function ($) {
   // Initialize the progress steps and update the bar on load
   createProgressSteps(); // Create progress steps dynamically
   updateProgressBar(); // Set the initial state of the progress bar
+  submitForm();
 
   // Update progress bar when the slide changes
   swiper.on("slideChange", function () {

@@ -1,3 +1,55 @@
+<?php
+    $able_to_claim = [
+        'Barclays Financial Services', 
+        'BMW Finance', 
+        'Blue Motor Finance', 
+        'Close Brothers', 
+        'Fiat Finance', 
+        'Ford Finance', 
+        'Land Rover Finance', 
+        'Lloyds Banking Group/Black Horse', 
+        'Mazda Finance', 
+        'Mercedes-Benz Finance', 
+        'MotoNovo', 
+        'Nissan Finance', 
+        'Peugeot Finance', 
+        'Renault Finance', 
+        'Santander', 
+        'Vauxhall Finance', 
+        'Volkswagen/Audi Finance'
+    ];
+
+    $not_able_to_claim = [
+        '1st Stop Finance', 
+        'Admiral', 
+        'Advantage Finance', 
+        'Autolend', 
+        'Auto Money', 
+        'Bank of Scotland', 
+        'Billing Finance', 
+        'Burnley Savings & Loans', 
+        'Car Loan Centre', 
+        'Carmoola', 
+        'First Response Finance', 
+        'Glenside Finance', 
+        'Guardian Finance', 
+        'Halifax', 
+        'Lendable', 
+        'Lloyds (excluding Black Horse)', 
+        'Mallard Finance', 
+        'MoneyBarn', 
+        'Oodle Car Finance', 
+        'Oplo', 
+        'Premium Plan', 
+        'RateSetter', 
+        'Retail Money Market', 
+        'Specialist Motor Finance', 
+        'Tandem', 
+        'Vehicle Credit', 
+        'V12 Vehicle Finance'
+    ];
+?>
+
 <div class="form-container pcp-checker">
     <div class="swiper-container">
         <div class="swiper-wrapper">
@@ -130,53 +182,21 @@
                 <div id="fp__selector" class="form-group" style="display:none;">
                     <select class="finance-provider-selector">
                         <option disabled selected>Select Finance Provider</option>
-                        <option>1st Stop Finance</option>
-                        <option>Admiral</option>
-                        <option>Advantage Finance</option>
-                        <option>Autolend</option>
-                        <option>Auto Money</option>
-                        <option>Bank of Scotland</option>
-                        <option>Barclays Financial Services</option>
-                        <option>Billing Finance</option>
-                        <option>BMW Finance</option>
-                        <option>Blue Motor Finance</option>
-                        <option>Burnley Savings & Loans</option>
-                        <option>Car Loan Centre</option>
-                        <option>Carmoola</option>
-                        <option>Close Brothers</option>
-                        <option>Fiat Finance</option>
-                        <option>First Response Finance</option>
-                        <option>Ford Finance</option>
-                        <option>Glenside Finance</option>
-                        <option>Guardian Finance</option>
-                        <option>Halifax</option>
-                        <option>Lendable</option>
-                        <option>Lloyds (excluding Black Horse)</option>
-                        <option>Lloyds Banking Group/Black Horse</option>
-                        <option>Mallard Finance</option>
-                        <option>Mazda Finance</option>
-                        <option>Mercedes-Benz Finance</option>
-                        <option>MoneyBarn</option>
-                        <option>MotoNovo</option>
-                        <option>Nissan Finance</option>
-                        <option>Oodle Car Finance</option>
-                        <option>Oplo</option>
-                        <option>Peugeot Finance</option>
-                        <option>Premium Plan</option>
-                        <option>RateSetter</option>
-                        <option>Renault Finance</option>
-                        <option>Retail Money Market</option>
-                        <option>Santander</option>
-                        <option>Specialist Motor Finance</option>
-                        <option>Tandem</option>
-                        <option>V12 Vehicle Finance</option>
-                        <option>Vauxhall Finance</option>
-                        <option>Vehicle Credit</option>
-                        <option>Volkswagen/Audi Finance</option>
+                        <?php 
+                        // Loop through able to claim providers
+                        foreach ($able_to_claim as $provider) {
+                            echo '<option value="' . $provider . '" data-claimable="true">' . $provider . '</option>';
+                        }
+
+                        // Loop through not able to claim providers
+                        foreach ($not_able_to_claim as $provider) {
+                            echo '<option value="' . $provider . '" data-claimable="false">' . $provider . '</option>';
+                        }
+                        ?>
                     </select>
                 </div>
 
-                <div>
+                <div> 
                     <button class="next-btn">Next</button>
                 </div>
 
@@ -225,6 +245,12 @@
                     <div class="form-group">
                         <input type="email" id="email-address" placeholder="Email Address">
                     </div>
+                </div>
+
+                <!-- Privacy Policy Checkbox -->
+                <div class="form-group pp-checkbox">
+                    <input type="checkbox" id="privacy-policy"> 
+                    <p>I agree to the <a href="/privacy-policy" target="_blank">Privacy Policy</a></p>
                 </div>
 
                 <div>
