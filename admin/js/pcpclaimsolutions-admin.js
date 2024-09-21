@@ -1,32 +1,55 @@
-(function( $ ) {
-	'use strict';
+jQuery(document).ready(function ($) {
+  // Use delegated event handling for dynamically added elements
+  $(document).on("click", ".view-more", function () {
+    var entryId = $(this).data("id");
+    $.ajax({
+      url: ajaxurl,
+      type: "POST",
+      data: {
+        action: "pcp_get_entry_details", // Matches PHP action
+        entry_id: entryId,
+      },
+      success: function (response) {
+        if (response.success) {
+          $("#pcp-modal-body").html(response.data.html); // Ensure correct modal ID
+          $("#pcp-details-modal").show(); // Ensure correct modal ID
+        } else {
+          alert("Failed to load details.");
+        }
+      },
+      error: function () {
+        alert("An error occurred while fetching entry details.");
+      },
+    });
+  });
 
-	/**
-	 * All of the code for your admin-facing JavaScript source
-	 * should reside in this file.
-	 *
-	 * Note: It has been assumed you will write jQuery code here, so the
-	 * $ function reference has been prepared for usage within the scope
-	 * of this function.
-	 *
-	 * This enables you to define handlers, for when the DOM is ready:
-	 *
-	 * $(function() {
-	 *
-	 * });
-	 *
-	 * When the window is loaded:
-	 *
-	 * $( window ).load(function() {
-	 *
-	 * });
-	 *
-	 * ...and/or other possibilities.
-	 *
-	 * Ideally, it is not considered best practise to attach more than a
-	 * single DOM-ready or window-load handler for a particular page.
-	 * Although scripts in the WordPress core, Plugins and Themes may be
-	 * practising this, we should strive to set a better example in our own work.
-	 */
+  // Delete entry functionality
+  $(document).on("click", ".delete-entry", function () {
+    if (confirm("Are you sure you want to delete this entry?")) {
+      var entryId = $(this).data("id");
+      $.ajax({
+        url: ajaxurl,
+        type: "POST",
+        data: {
+          action: "pcp_delete_entry", // Matches PHP action
+          entry_id: entryId,
+        },
+        success: function (response) {
+          if (response.success) {
+            location.reload(); // Reload after successful delete
+          } else {
+            alert("Failed to delete entry.");
+          }
+        },
+        error: function () {
+          alert("An error occurred while deleting the entry.");
+        },
+      });
+    }
+  });
 
-})( jQuery );
+  // Close modal event
+  $(document).on("click", "#pcp-close-modal", function () {
+    $("#pcp-details-modal").hide();
+  });
+});

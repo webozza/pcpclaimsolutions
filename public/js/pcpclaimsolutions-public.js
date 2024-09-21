@@ -426,24 +426,29 @@ jQuery(document).ready(function ($) {
 
     if (currentSlide === 0) {
       // Handle car registration entry and API call
-      var carReg = $("#car-reg").val();
+      var carReg = $("#car-reg").val().replace(/\W/g, ""); // Remove non-alphanumeric characters
       if (carReg === "") {
         alert("Please enter your car registration number.");
         return;
       }
+
       showLoadingEffect();
+
       $.ajax({
-        url: pcpclaims_plugin.api_handler,
+        url: pcpclaims_plugin.ajaxurl, // This should point to admin-ajax.php
         type: "POST",
-        data: { registrationNumber: carReg },
+        data: {
+          action: "pcp_handle_vehicle_enquiry", // The action registered in your PHP
+          registrationNumber: carReg, // The sanitized car registration number
+        },
         success: function (response) {
-          var data = JSON.parse(response);
-          if (data.error || !data.make) {
-            showFallbackForm();
+          if (response.success) {
+            populateCarDetails(response.data);
+            proceedToNextSlide();
           } else {
-            populateCarDetails(data);
+            showFallbackForm();
+            proceedToNextSlide();
           }
-          proceedToNextSlide();
         },
         error: function () {
           showFallbackForm();
@@ -455,7 +460,6 @@ jQuery(document).ready(function ($) {
       });
     } else if (currentSlide === 1 && $(".fallback-form").length === 0) {
       // Second Slide: Car Details Confirmation
-
       if (!validateRadioGroup('input[name="car-details-correct"]')) {
         alert("Please confirm whether the car details are correct.");
         return;
@@ -467,7 +471,7 @@ jQuery(document).ready(function ($) {
         showFallbackForm();
         swiper.allowSlideNext = false; // Prevent moving to the next slide
         swiper.slideTo(currentSlide); // Force swiper to stay on the current slide
-        return; // Stop the execution here to prevent advancing to the next slide
+        return; // Stop execution to prevent advancing to the next slide
       } else {
         proceedToNextSlide();
       }
@@ -523,47 +527,63 @@ jQuery(document).ready(function ($) {
   }
 
   function submitForm() {
-    $(".submit-pcp-request").on("click", function (e) {
-      e.preventDefault(); // Prevent the default form submission behavior
+    $(".submit-pcp-request")
+      .off("click")
+      .on("click", function (e) {
+        e.preventDefault(); // Prevent default form submission
 
-      // Check if the privacy policy checkbox is checked
-      if (!$("#privacy-policy").is(":checked")) {
-        alert("You must agree to the privacy policy before submitting.");
-        return; // Exit the function, preventing the form from submitting
-      }
+        // Check if the privacy policy checkbox is checked
+        if (!$("#privacy-policy").is(":checked")) {
+          alert("You must agree to the privacy policy before submitting.");
+          return; // Prevent form submission
+        }
 
-      // Perform further validation or AJAX submission if required
-      var firstName = $("#first-name").val();
-      var lastName = $("#last-name").val();
-      var phoneNumber = $("#phone-number").val();
-      var emailAddress = $("#email-address").val();
+        // Perform validation for required fields
+        var firstName = $("#first-name").val();
+        var lastName = $("#last-name").val();
+        var phoneNumber = $("#phone-number").val();
+        var emailAddress = $("#email-address").val();
+        var carReg = $("#car-reg").val();
 
-      if (!firstName || !lastName) {
-        alert("Please fill in the required fields.");
-        return;
-      }
+        if (!firstName || !lastName || !carReg) {
+          alert(
+            "Please fill in the required fields (First Name, Last Name, and Car Registration)."
+          );
+          return;
+        }
 
-      // Proceed with form submission or AJAX call
-      // Example:
-      $.ajax({
-        url: "/path-to-your-api",
-        type: "POST",
-        data: {
+        // Collect form data
+        const data = {
+          action: "pcp_claim_form_submit", // The action name registered in PHP
           first_name: firstName,
           last_name: lastName,
           phone_number: phoneNumber,
           email_address: emailAddress,
-        },
-        success: function (response) {
-          // Handle success response
-          alert("Your request has been submitted!");
-        },
-        error: function () {
-          // Handle error response
+          car_reg: carReg,
+          car_make: $("#car-make").val(),
+          car_model: $("#car-model").val(),
+          car_year: $("#car-year").val(),
+          car_fuel: $("#car-fuel").val(),
+          car_colour: $("#car-colour").val(),
+          loan_type: $("input[name='loan-type']:checked").val(),
+          finance_provider: $(".finance-provider-selector").val(),
+        };
+
+        // Proceed with AJAX request
+        $.post(pcpclaims_plugin.ajaxurl, data, function (response) {
+          // Log and parse response
+          console.log("Raw response:", response);
+
+          if (typeof response === "object" && response.success) {
+            alert(response.data.message);
+          } else {
+            alert(response.data.message || "Failed to submit the form.");
+          }
+        }).fail(function (xhr, status, error) {
+          console.error("AJAX error:", status, error);
           alert("There was an error submitting your request.");
-        },
+        });
       });
-    });
   }
 
   // Function to proceed to the next slide

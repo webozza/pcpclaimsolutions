@@ -127,7 +127,7 @@
 
                 <!-- The extra field for "Other" ownership selection -->
                 <div id="other-ownership-field" class="form-group" style="display:none;">
-                    <input type="text" id="other-ownership" placeholder="2022">
+                    <input type="text" id="other-ownership" placeholder="2022" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                 </div>
 
                 <div>
