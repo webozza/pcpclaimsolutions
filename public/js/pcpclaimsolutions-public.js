@@ -571,11 +571,27 @@ jQuery(document).ready(function ($) {
 
         // Proceed with AJAX request
         $.post(pcpclaims_plugin.ajaxurl, data, function (response) {
-          // Log and parse response
-          console.log("Raw response:", response);
+          // Check if the submission is successful
+          if (response.success) {
+            // Clear the last slide's content and display success message
+            const lastSlide = $(".swiper-slide").last();
+            lastSlide.html(`
+                  <div class="success-message" style="text-align: center;">
+                      <img src="/wp-content/plugins/pcpclaimsolutions/public/assets/success.png" alt="Success" style="width: 50px; margin-bottom: 20px;">
+                      <h3>Thank you! Your claim has been submitted successfully.</h3>
+                      <button class="restart-btn">Submit another claim</button>
+                  </div>
+              `);
 
-          if (typeof response === "object" && response.success) {
-            alert(response.data.message);
+            // Reinitialize the "restart" button to reset the form when clicked
+            $(".restart-btn").on("click", function () {
+              restartForm();
+            });
+
+            // Go to the last slide to show the success message
+            swiper.allowSlideNext = true;
+            swiper.slideTo(swiper.slides.length - 1);
+            swiper.allowSlideNext = false;
           } else {
             alert(response.data.message || "Failed to submit the form.");
           }
