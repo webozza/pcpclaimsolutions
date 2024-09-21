@@ -184,7 +184,20 @@ jQuery(document).ready(function ($) {
       .on("change", function () {
         var selectedOption = $(this).find(":selected");
         var isClaimable = selectedOption.attr("data-claimable") === "true";
-        if (!isClaimable) {
+
+        // Show "Other" input field if "Other" is selected
+        if ($(this).val() === "Other") {
+          $("#other-finance-provider-field").slideDown(function () {
+            swiper.updateAutoHeight(300);
+          });
+        } else {
+          $("#other-finance-provider-field").slideUp(function () {
+            swiper.updateAutoHeight(300);
+          });
+        }
+
+        // Check if the selected finance provider is claimable
+        if (!isClaimable && $(this).val() !== "Other") {
           showIneligibilityMessage();
         }
       });
@@ -458,6 +471,18 @@ jQuery(document).ready(function ($) {
       } else {
         proceedToNextSlide();
       }
+    } else if (currentSlide === 3) {
+      // Handle validation for the finance provider step
+      var financeProvider = $(".finance-provider-selector").val();
+      var otherFinanceProvider = $("#other-finance-provider").val();
+
+      // If "Other" is selected and no value is entered, show an alert and prevent the slide from moving forward
+      if (financeProvider === "Other" && otherFinanceProvider.trim() === "") {
+        alert("Please specify the finance provider.");
+        return;
+      }
+
+      proceedToNextSlide(); // Allow moving to the next slide if validation passes
     } else if (currentSlide === 1 && $(".fallback-form").length > 0) {
       // If fallback form is already visible, validate and proceed
       if (!validateFallbackForm()) {

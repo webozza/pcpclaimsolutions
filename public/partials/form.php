@@ -193,7 +193,13 @@
                             echo '<option value="' . $provider . '" data-claimable="false">' . $provider . '</option>';
                         }
                         ?>
+                        <option value="Other">Other (please specify)</option>
                     </select>
+                </div>
+
+                <!-- Hidden input field for "Other" finance provider -->
+                <div id="other-finance-provider-field" class="form-group" style="display:none;">
+                    <input type="text" id="other-finance-provider" placeholder="Specify Finance Provider">
                 </div>
 
                 <div> 
