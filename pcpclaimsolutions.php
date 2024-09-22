@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.18' );
+define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.19' );
 
 /**
  * The code that runs during plugin activation.
@@ -95,8 +95,12 @@ function pcpclaimsolutions_enqueue_assets() {
     wp_enqueue_style('swiper-css', 'https://unpkg.com/swiper/swiper-bundle.min.css', array(), PCPCLAIMSOLUTIONS_VERSION);
     wp_enqueue_script('swiper-js', 'https://unpkg.com/swiper/swiper-bundle.min.js', array(), PCPCLAIMSOLUTIONS_VERSION, true);
 
+    // Enqueue Select2 CSS and JS
+    wp_enqueue_style('select2-css', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css', array(), '4.0.13');
+    wp_enqueue_script('select2-js', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js', array('jquery'), '4.0.13', true);
+
     // Enqueue the JS file with version control, with jQuery as a dependency (if needed)
-    wp_enqueue_script('pcpclaimsolutions-public-js', plugin_dir_url(__FILE__) . 'public/js/pcpclaimsolutions-public.js', array('jquery'), PCPCLAIMSOLUTIONS_VERSION, true);
+    wp_enqueue_script('pcpclaimsolutions-public-js', plugin_dir_url(__FILE__) . 'public/js/pcpclaimsolutions-public.js', array('jquery', 'select2-js'), PCPCLAIMSOLUTIONS_VERSION, true);
 
     // Localize the script to pass the correct URLs
     wp_localize_script('pcpclaimsolutions-public-js', 'pcpclaims_plugin', array(

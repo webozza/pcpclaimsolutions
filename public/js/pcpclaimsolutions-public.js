@@ -424,8 +424,11 @@ jQuery(document).ready(function ($) {
   function handleNextButtonClick() {
     var currentSlide = swiper.activeIndex;
 
+    // Disable slide to next by default
+    swiper.allowSlideNext = false;
+
+    // Slide 0: Car registration entry and API call
     if (currentSlide === 0) {
-      // Handle car registration entry and API call
       var carReg = $("#car-reg").val().replace(/\W/g, ""); // Remove non-alphanumeric characters
       if (carReg === "") {
         alert("Please enter your car registration number.");
@@ -444,22 +447,26 @@ jQuery(document).ready(function ($) {
         success: function (response) {
           if (response.success) {
             populateCarDetails(response.data);
+            swiper.allowSlideNext = true; // Enable slide to next only if successful
             proceedToNextSlide();
           } else {
             showFallbackForm();
+            swiper.allowSlideNext = true; // Enable next slide after showing fallback form
             proceedToNextSlide();
           }
         },
         error: function () {
           showFallbackForm();
+          swiper.allowSlideNext = true; // Enable slide to next in case of error
           proceedToNextSlide();
         },
         complete: function () {
           $(".next-btn").html("Next").prop("disabled", false);
         },
       });
+
+      // Slide 1: Car Details Confirmation
     } else if (currentSlide === 1 && $(".fallback-form").length === 0) {
-      // Second Slide: Car Details Confirmation
       if (!validateRadioGroup('input[name="car-details-correct"]')) {
         alert("Please confirm whether the car details are correct.");
         return;
@@ -469,31 +476,87 @@ jQuery(document).ready(function ($) {
       if (isConfirmed === "no") {
         // Show fallback form if "No" is selected for car details
         showFallbackForm();
-        swiper.allowSlideNext = false; // Prevent moving to the next slide
-        swiper.slideTo(currentSlide); // Force swiper to stay on the current slide
-        return; // Stop execution to prevent advancing to the next slide
+        swiper.allowSlideNext = false;
+        swiper.slideTo(currentSlide);
+        return;
       } else {
+        swiper.allowSlideNext = true; // Enable slide to next if validation passes
         proceedToNextSlide();
       }
-    } else if (currentSlide === 3) {
-      // Handle validation for the finance provider step
-      var financeProvider = $(".finance-provider-selector").val();
-      var otherFinanceProvider = $("#other-finance-provider").val();
 
-      // If "Other" is selected and no value is entered, show an alert and prevent the slide from moving forward
-      if (financeProvider === "Other" && otherFinanceProvider.trim() === "") {
-        alert("Please specify the finance provider.");
+      // Slide 2: Ownership Year Selection
+    } else if (currentSlide === 2) {
+      if (!validateRadioGroup('input[name="car-ownership"]')) {
+        alert("Please select the ownership year.");
+        return;
+      }
+      swiper.allowSlideNext = true; // Enable slide to next if validation passes
+      proceedToNextSlide();
+
+      // Slide 3: Finance Provider validation
+    } else if (currentSlide === 3) {
+      if (!validateRadioGroup('input[name="loan-type"]')) {
+        // Validation added here
+        alert("Please select a loan type.");
+        return;
+      }
+      swiper.allowSlideNext = true; // Enable slide to next if validation passes
+      proceedToNextSlide();
+
+      // Slide 4: Commission Aware and Finance Provider validation
+    } else if (currentSlide === 4) {
+      // Validate commission-aware selection
+      if (!validateRadioGroup('input[name="commission-aware"]')) {
+        alert("Please confirm whether you were aware of the commission.");
         return;
       }
 
-      proceedToNextSlide(); // Allow moving to the next slide if validation passes
-    } else if (currentSlide === 1 && $(".fallback-form").length > 0) {
-      // If fallback form is already visible, validate and proceed
-      if (!validateFallbackForm()) {
-        return; // Prevent swiper from moving to the next slide if validation fails
+      // Validate finance provider selection
+      if (!validateRadioGroup('input[name="finance-provider-name"]')) {
+        alert("Please confirm if you know the name of the finance provider.");
+        return;
       }
+
+      // If the user selected "Yes" for "Do you know the finance provider?"
+      var financeProviderSelection = $(
+        'input[name="finance-provider-name"]:checked'
+      ).val();
+      if (financeProviderSelection === "Yes") {
+        var selectedProvider = $(".finance-provider-selector").val();
+
+        // Ensure a finance provider is selected from the dropdown
+        if (
+          !selectedProvider ||
+          selectedProvider === "Select Finance Provider"
+        ) {
+          alert("Please select a finance provider.");
+          return;
+        }
+      }
+
+      swiper.allowSlideNext = true; // Enable slide to next if validation passes
       proceedToNextSlide();
+
+      // Slide 5: Car Cost Selection
+    } else if (currentSlide === 5) {
+      if (!validateRadioGroup('input[name="car-cost"]')) {
+        alert("Please select how much the car cost.");
+        return;
+      }
+      swiper.allowSlideNext = true; // Enable slide to next if validation passes
+      proceedToNextSlide();
+
+      // Fallback Form validation on Slide 1 (if applicable)
+    } else if (currentSlide === 1 && $(".fallback-form").length > 0) {
+      if (!validateFallbackForm()) {
+        return;
+      }
+      swiper.allowSlideNext = true; // Enable slide to next if validation passes
+      proceedToNextSlide();
+
+      // Default case for other slides
     } else {
+      swiper.allowSlideNext = true; // Allow slide to next for other cases
       proceedToNextSlide();
     }
   }
