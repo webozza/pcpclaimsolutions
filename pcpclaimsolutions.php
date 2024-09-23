@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.20' );
+define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.21' );
 
 /**
  * The code that runs during plugin activation.
@@ -156,6 +156,13 @@ function pcp_claim_display_submissions() {
     $entries = $wpdb->get_results("SELECT * FROM $table_name ORDER BY date_submitted DESC");
 
     echo '<h1>Claim Submissions</h1>';
+    // Add Export to CSV button
+    echo '<form method="post" action="' . admin_url('admin-ajax.php') . '">';
+    echo '<input type="hidden" name="action" value="pcp_export_to_csv">';
+    echo '<button type="submit" class="button button-primary">Export to CSV</button>';
+    echo '</form>';
+
+    // Continue with table rendering
     echo '<table class="wp-list-table widefat fixed striped">';
     echo '<thead>
             <tr>
@@ -189,7 +196,7 @@ function pcp_claim_display_submissions() {
 
     echo '</tbody></table>';
     
-    // Add modal popup for viewing more details
+    // Add modal popup for viewing more details (already existing in your code)
     echo '
     <div id="view-more-modal" style="display:none;">
         <div class="modal-content">
@@ -387,3 +394,37 @@ function pcp_delete_entry() {
         wp_send_json_error(['message' => 'Failed to delete entry.']);
     }
 }
+
+// Handle CSV Export via AJAX
+function pcp_export_to_csv() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'pcp_claim_entries';
+
+    // Get all claim entries
+    $entries = $wpdb->get_results("SELECT * FROM $table_name ORDER BY date_submitted DESC", ARRAY_A);
+
+    if (empty($entries)) {
+        wp_die('No entries found to export.');
+    }
+
+    // Set CSV headers
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=claim-submissions.csv');
+
+    // Output CSV columns
+    $output = fopen('php://output', 'w');
+    fputcsv($output, array('ID', 'First Name', 'Last Name', 'Car Registration', 'Finance Provider', 'Car Cost', 'Commission Aware', 'Date Submitted'));
+
+    // Output each row
+    foreach ($entries as $entry) {
+        fputcsv($output, $entry);
+    }
+
+    fclose($output);
+    exit;
+}
+add_action('wp_ajax_pcp_export_to_csv', 'pcp_export_to_csv');
