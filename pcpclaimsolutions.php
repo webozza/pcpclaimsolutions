@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.19' );
+define( 'PCPCLAIMSOLUTIONS_VERSION', '1.0.20' );
 
 /**
  * The code that runs during plugin activation.
@@ -292,7 +292,7 @@ function pcp_claim_handle_form_submission() {
             'finance_provider' => $finance_provider,
             'other_finance_provider' => $other_finance_provider,
             'car_cost' => $car_cost,
-            'commission_aware' => $commission_aware
+            'commission_aware' => $commission_aware,
         ]
     );
 

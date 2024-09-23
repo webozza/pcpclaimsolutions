@@ -383,7 +383,8 @@
   display: none;
 }
 
-#fp__selector {
+#fp__selector,
+#other-finance-provider-field {
   margin-left: 2px;
 }
 

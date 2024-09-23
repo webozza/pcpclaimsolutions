@@ -404,8 +404,17 @@ jQuery(document).ready(function ($) {
     swiper.update();
   }
 
+  let apiCarMake = "";
+  let apiCarFuel = "";
+  let apiCarColour = "";
+
   // Function to populate the car details in the next slide if data is found
   function populateCarDetails(data) {
+    // Populate the global variables with the API response
+    apiCarMake = data.make;
+    apiCarFuel = data.fuelType;
+    apiCarColour = data.colour;
+
     $(".car-details .make .data").text(data.make);
     $(".car-details .fuel-type .data").text(data.fuelType);
     $(".car-details .colour .data").text(data.colour);
@@ -566,6 +575,11 @@ jQuery(document).ready(function ($) {
     return $(selector + ":checked").length > 0;
   }
 
+  function validateEmail(email) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  }
+
   // Function to validate the fallback form
   function validateFallbackForm() {
     var carMake = $("#car-make").val();
@@ -608,11 +622,34 @@ jQuery(document).ready(function ($) {
         var emailAddress = $("#email-address").val();
         var carReg = $("#car-reg").val();
 
+        // Email validation
+        if (!validateEmail(emailAddress)) {
+          alert("Please enter a valid email address.");
+          return; // Prevent form submission if email is invalid
+        }
+
         if (!firstName || !lastName || !carReg) {
           alert(
             "Please fill in the required fields (First Name, Last Name, and Car Registration)."
           );
           return;
+        }
+
+        // Determine whether to use fallback form data or API data
+        let carMake, carFuel, carColour;
+
+        if ($(".fallback-form").length > 0) {
+          // Fallback form is present, use the values from the form
+          carMake = $("#car-make").val();
+          carFuel = $("#car-fuel").val();
+          carColour = $("#car-colour").val();
+          carYear = $("#car-year").val();
+        } else {
+          // No fallback form, use the API response data
+          carMake = apiCarMake;
+          carFuel = apiCarFuel;
+          carColour = apiCarColour;
+          carYear = $('[name="car-ownership"]:checked').val();
         }
 
         // Collect form data
@@ -623,13 +660,16 @@ jQuery(document).ready(function ($) {
           phone_number: phoneNumber,
           email_address: emailAddress,
           car_reg: carReg,
-          car_make: $("#car-make").val(),
+          car_make: carMake,
           car_model: $("#car-model").val(),
-          car_year: $("#car-year").val(),
-          car_fuel: $("#car-fuel").val(),
-          car_colour: $("#car-colour").val(),
+          car_year: carYear,
+          car_fuel: carFuel,
+          car_colour: carColour,
           loan_type: $("input[name='loan-type']:checked").val(),
           finance_provider: $(".finance-provider-selector").val(),
+          other_finance_provider: $("#other-finance-provider").val(),
+          commission_aware: $('[name="commission-aware"]:checked').val(),
+          car_cost: $('[name="car-cost"]:checked').val(),
         };
 
         // Proceed with AJAX request
